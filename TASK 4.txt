@@ -1,0 +1,260 @@
+#!/bin/bash
+"""
+TASK 4: NIDS - SECTION WISE IMPLEMENTATION (DIFFERENT APPROACH)
+Network Intrusion Detection System - 5 Distinct Sections in Single File
+Tool: Snort 3.0 | Focus: Modular, educational, production-ready
+"""
+
+# =============================================================================
+# SECTION 1: SNORT NIDS INSTALLATION & INITIAL SETUP
+# Set up network-based intrusion detection system
+
+section1_setup() {
+    echo "🔍 SECTION 1: SNORT 3.0 NIDS INSTALLATION"
+    echo "========================================"
+    
+    # Install Snort 3 + dependencies (Ubuntu/Debian 2026)
+    sudo apt update
+    sudo apt install -y snort lua5.3 libdaq-dev libdnet-dev libpcap-dev \
+        libpcre3-dev libnet1-dev zlib1g-dev luajit owlpsr oinkmaster
+    
+    # Auto-detect interface
+    INTERFACE=$(ip -o link show | awk -F': ' '{print $2}' | grep -v lo | head -1)
+    echo "📡 Primary interface: $INTERFACE"
+    
+    # Create directories
+    sudo mkdir -p /etc/snort/rules /var/log/snort
+    
+    echo " SECTION 1 COMPLETE: Snort 3.0 installed"
+}
+
+# =============================================================================
+# SECTION 2: SNORT RULES CONFIGURATION & CUSTOM ALERTS
+# Configure rules for suspicious/malicious activity detection
+
+section2_rules() {
+    echo ""
+    echo " SECTION 2: CUSTOM SNORT RULES CONFIGURATION"
+    echo "=============================================="
+    
+    # Official Snort VRT rules (free community ruleset)
+    sudo oinkmaster -C -o /etc/snort/rules/snort3-community.rules \
+        https://www.snort.org/downloads/community/snort3-community.rules
+    
+    # Custom high-priority rules for immediate threats
+    cat > /etc/snort/rules/local.rules << 'EOF'
+# SECTION 2: CUSTOM DETECTION RULES
+    
+# SQL Injection Attempts
+alert tcp any any -> any 80 (msg:"SQL Injection Attempt"; content:"' OR 1=1"; nocase; sid:1000001; rev:1;)
+
+# Brute Force SSH
+alert tcp any any -> $HOME_NET 22 (msg:"SSH Brute Force"; flow:to_server,established; threshold:type both, track by_src, count 5, seconds 60; sid:1000002; rev:1;)
+
+# XSS Attacks
+alert tcp any any -> any 443 (msg:"XSS Attack"; content:"<script"; nocase; sid:1000003; rev:1;)
+
+# Suspicious User-Agents
+alert tcp any any -> any 80 (msg:"Malicious User-Agent"; content:"Mozilla/5.0 (compatible; EvilBot"; nocase; sid:1000004; rev:1;)
+
+# Port Scanning
+alert tcp any any -> $HOME_NET any (msg:"Port Scan"; flags:S,12; threshold:type threshold, track by_dst, count 10, seconds 60; sid:1000005; rev:1;)
+EOF
+    
+    # Snort configuration for NIDS mode
+    cat > /etc/snort/snort.lua << 'EOF'
+HOME_NET = '192.168.1.0/24'
+EXTERNAL_NET = '!$HOME_NET'
+
+ips = {
+    rules = [[
+        include /etc/snort/rules/snort3-community.rules
+        include /etc/snort/rules/local.rules
+    ]],
+    variables = default_variables,
+    include = 'snort-defaults.lua'
+}
+
+alert_json = {
+    file = true,
+    limit = 1000000,
+    pkt_num = true,
+    src_port = true,
+    dst_port = true
+}
+EOF
+    
+    echo "✅ SECTION 2 COMPLETE: 5 custom rules + community ruleset loaded"
+}
+
+# =============================================================================
+# SECTION 3: CONTINUOUS NETWORK TRAFFIC MONITORING
+# Real-time threat monitoring system
+
+section3_monitoring() {
+    echo ""
+    echo "  SECTION 3: CONTINUOUS TRAFFIC MONITORING"
+    echo "============================================"
+    
+    # Real-time alert parser + dashboard
+    cat > /usr/local/bin/nids-monitor << 'EOF'
+#!/bin/bash
+# SECTION 3: LIVE NIDS MONITORING DASHBOARD
+
+echo " LIVE SNORT NIDS MONITORING (Ctrl+C to stop)"
+echo "=============================================="
+
+# Colors for dashboard
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+while true; do
+    clear
+    echo " $(date)"
+    echo " INTERFACE: $INTERFACE"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    # Recent alerts (last 10)
+    ALERTS=$(sudo tail -20 /var/log/snort/alert_json.txt | grep -c '"event_type":"alert"')
+    echo -e "${GREEN} Alerts (last 20s): $ALERTS${NC}"
+    
+    # Show latest alerts
+    echo ""
+    echo "📋 LATEST THREATS:"
+    sudo tail -10 /var/log/snort/alert | grep -E "(SQL|XSS|Brute|Scan)" || echo "  No recent threats"
+    
+    # Network stats
+    echo ""
+    echo " NETWORK STATS:"
+    nload $INTERFACE 1 2>/dev/null | head -8 || echo "  Monitoring active..."
+    
+    sleep 2
+done
+EOF
+    
+    chmod +x /usr/local/bin/nids-monitor
+    echo "✅ SECTION 3 COMPLETE: Live dashboard ready (nids-monitor)"
+}
+
+# =============================================================================
+# SECTION 4: AUTOMATED RESPONSE MECHANISMS
+# Block detected intrusions automatically
+
+section4_response() {
+    echo ""
+    echo "🚨 SECTION 4: AUTOMATED RESPONSE SYSTEM"
+    echo "======================================"
+    
+    # Auto-block script for critical threats
+    cat > /usr/local/bin/nids-blocker << 'EOF'
+#!/bin/bash
+# SECTION 4: AUTOMATIC INTRUSION RESPONSE
+
+LOGFILE="/var/log/snort/alert"
+BLOCKED_IPS="/var/log/nids_blocked_ips.txt"
+
+tail -Fn0 "$LOGFILE" | while read line; do
+    # Detect critical threats
+    if echo "$line" | grep -qiE "(SQL|brute|xss)"; then
+        ATTACKER_IP=$(echo "$line" | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}')
+        
+        if [ ! -z "$ATTACKER_IP" ]; then
+            # Check if already blocked
+            if ! grep -q "$ATTACKER_IP" "$BLOCKED_IPS"; then
+                echo "🚨 BLOCKING: $ATTACKER_IP"
+                sudo iptables -A INPUT -s $ATTACKER_IP -j DROP -m comment --comment "NIDS-AUTO-BLOCK"
+                echo "$(date): BLOCKED $ATTACKER_IP" >> "$BLOCKED_IPS"
+                
+                # Auto-unblock after 2 hours
+                (sleep 7200; sudo iptables -D INPUT -s $ATTACKER_IP -m comment --comment "NIDS-AUTO-BLOCK" 2>/dev/null) &
+            fi
+        fi
+    fi
+done
+EOF
+    
+    chmod +x /usr/local/bin/nids-blocker
+    
+    # Create systemd service for continuous response
+    cat > /etc/systemd/system/nids-blocker.service << 'EOF'
+[Unit]
+Description=NIDS Auto-blocker
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/nids-blocker
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    
+    sudo systemctl daemon-reload
+    echo " SECTION 4 COMPLETE: Auto-blocking + systemd service ready"
+}
+
+# =============================================================================
+# SECTION 5: ATTACK VISUALIZATION & REPORTING
+# Dashboard with graphs and statistics
+
+section5_visualization() {
+    echo ""
+    echo " SECTION 5: ATTACK VISUALIZATION DASHBOARD"
+    echo "=========================================="
+    
+    cat > /usr/local/bin/nids-dashboard << 'EOF'
+#!/bin/bash
+# SECTION 5: NIDS ATTACK VISUALIZATION
+
+echo "📈 NIDS ATTACK DASHBOARD"
+echo "========================"
+
+# Attack statistics
+echo "📊 24HR STATS:"
+echo "SQL Attacks: $(sudo grep -c "SQL Injection" /var/log/snort/alert 2>/dev/null || echo 0)"
+echo "Brute Force: $(sudo grep -c "brute.*ssh" /var/log/snort/alert 2>/dev/null || echo 0)"
+echo "XSS: $(sudo grep -c "XSS" /var/log/snort/alert 2>/dev/null || echo 0)"
+echo "Port Scans: $(sudo grep -c "Port Scan" /var/log/snort/alert 2>/dev/null || echo 0)"
+
+echo ""
+echo " BLOCKED IPS:"
+sudo tail -5 /var/log/nids_blocked_ips.txt 2>/dev/null || echo "No blocks yet"
+
+echo ""
+echo " TOP ATTACKERS:"
+sudo awk '{print $NF}' /var/log/nids_blocked_ips.txt 2>/dev/null | sort | uniq -c | sort -nr | head -5 || echo "No data"
+EOF
+    
+    chmod +x /usr/local/bin/nids-dashboard
+    
+    echo "✅ SECTION 5 COMPLETE: Dashboard ready (nids-dashboard)"
+}
+
+# =============================================================================
+# MAIN EXECUTION - RUN ALL SECTIONS
+
+main() {
+    echo "🚀 TASK 4: NETWORK INTRUSION DETECTION SYSTEM"
+    echo "============================================"
+    
+    section1_setup
+    section2_rules
+    section3_monitoring
+    section4_response
+    section5_visualization
+    
+    echo ""
+    echo " COMPLETE DEPLOYMENT SUMMARY:"
+    echo "1. ${GREEN}sudo snort -c /etc/snort/snort.lua -i $INTERFACE${NC}           # Start NIDS"
+    echo "2. ${GREEN}nids-monitor${NC}                                        # Live dashboard"  
+    echo "3. ${GREEN}sudo systemctl start nids-blocker${NC}                  # Auto-response"
+    echo "4. ${GREEN}nids-dashboard${NC}                                     # Attack stats"
+    echo ""
+    echo " TEST: nmap -sS localhost  # Generate scan alerts"
+}
+
+# Run all sections
+main
