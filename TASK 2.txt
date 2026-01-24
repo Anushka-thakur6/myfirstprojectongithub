@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Phishing Awareness Training - Interactive Module</title>
+    <style>
+        body { font-family: Arial; max-width: 900px; margin: 0 auto; padding: 20px; }
+        .section { border: 2px solid #333; margin: 20px 0; padding: 20px; border-radius: 10px; }
+        .warning { background: #ffebee; padding: 15px; border-left: 5px solid #f44336; }
+        .safe { background: #e8f5e8; padding: 15px; border-left: 5px solid #4caf50; }
+        .quiz { background: #fff3e0; padding: 20px; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .danger { background: #f44336; color: white; }
+        .success { background: #4caf50; color: white; }
+        .score { font-size: 24px; font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<!-- 
+     SECTION 1: PHISHING ATTACKS EXPLANATION
+     Create presentation/module focused on phishing attacks
+     -->
+<div class="section">
+    <h2>📧 SECTION 1: What Are Phishing Attacks?</h2>
+    <div class="warning">
+        <h3>Phishing Goal:</h3>
+        <p>Steal your <strong>passwords, bank details, credit cards</strong> by pretending to be trusted companies</p>
+    </div>
+    
+    <h4>Common Types:</h4>
+    <ul>
+        <li><strong>Email Phishing</strong> - Fake bank/PayPal emails</li>
+        <li><strong>Spear Phishing</strong> - Targeted at you specifically</li>
+        <li><strong>Smishing</strong> - SMS text messages</li>
+        <li><strong>Vishing</strong> - Phone calls pretending to be tech support</li>
+    </ul>
+</div>
+
+<!-- =============================================================================
+     SECTION 2: RECOGNIZE PHISHING EMAILS & WEBSITES
+     Explain recognition techniques
+     ============================================================================= -->
+<div class="section">
+    <h2> SECTION 2: Spot Phishing Emails & Fake Sites</h2>
+    
+    <div class="warning">
+        <h4> RED FLAGS:</h4>
+        <ul>
+            <li><strong>Wrong sender:</strong> support@arnazon.com (not amazon.com)</li>
+            <li><strong>Generic greeting:</strong> "Dear Customer" (not your name)</li>
+            <li><strong>URGENT language:</strong> "Account closes in 24hrs!"</li>
+            <li><strong>Typos/domains:</strong> paypa1.com, g00gle.com</li>
+            <li><strong>Shortened URLs:</strong> Hover to see real destination</li>
+        </ul>
+    </div>
+    
+    <div class="safe">
+        <h4> SAFE CHECKS:</h4>
+        <ul>
+            <li>Hover links (don't click)</li>
+            <li>Check padlock/SSL is real</li>
+            <li>Verify sender by phone</li>
+        </ul>
+    </div>
+</div>
+
+<!-- =============================================================================
+     SECTION 3: SOCIAL ENGINEERING TACTICS
+     Educate about attacker psychology
+     ============================================================================= -->
+<div class="section">
+    <h2> SECTION 3: Social Engineering Tricks</h2>
+    
+    <table style="width:100%; border-collapse: collapse;">
+        <tr><th>Tactic</th><th>How Attackers Use It</th></tr>
+        <tr><td><strong>Urgency</strong></td><td>"Act now or lose access!"</td></tr>
+        <tr><td><strong>Authority</strong></td><td>"IT requires password reset"</td></tr>
+        <tr><td><strong>Familiarity</strong></td><td>Fake boss/colleague email</td></tr>
+        <tr><td><strong>Greed</strong></td><td>"You won $1000!"</td></tr>
+        <tr><td><strong>Fear</strong></td><td>"Account hacked, click here!"</td></tr>
+    </table>
+</div>
+
+<!-- =============================================================================
+     SECTION 4: BEST PRACTICES & TIPS
+     Prevention strategies
+     ============================================================================= -->
+<div class="section">
+    <h2> SECTION 4: Best Practices to Stay Safe</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div>
+            <h4>✅ DO:</h4>
+            <ul>
+                <li>Enable 2FA everywhere</li>
+                <li>Verify by phone before clicking</li>
+                <li>Use password manager</li>
+                <li>Report to IT/security team</li>
+            </ul>
+        </div>
+        <div>
+            <h4> NEVER:</h4>
+            <ul>
+                <li>Click unsolicited links</li>
+                <li>Share passwords</li>
+                <li>Use public WiFi for banking</li>
+                <li>Reuse passwords</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- =============================================================================
+     SECTION 5: REAL-WORLD EXAMPLES & INTERACTIVE QUIZ
+     Engagement through examples + testing
+     ============================================================================= -->
+<div class="section">
+    <h2> SECTION 5: Test Your Skills!</h2>
+    
+    <div class="quiz">
+        <h3>Real Example 1: Twitter 2020 Hack</h3>
+        <p>Attackers called employees pretending to be IT, got internal access, hijacked celebrity accounts for Bitcoin scam. <strong>$120K stolen!</strong></p>
+        
+        <h3>Quiz Question 1:</h3>
+        <p><em>"URGENT: Verify account or suspended within 24hrs - chase-security@alerts.com"</em></p>
+        <button class="danger" onclick="checkAnswer(1, false)"> Phishing</button>
+        <button class="success" onclick="checkAnswer(1, true)"> Legitimate</button>
+        <div id="result1"></div>
+        
+        <hr>
+        <h3>Quiz Question 2:</h3>
+        <p><em>Email from "CEO" with invoice.pdf attachment</em></p>
+        <button class="danger" onclick="checkAnswer(2, false)"> Phishing</button>
+        <button class="success" onclick="checkAnswer(2, true)"> Legitimate</button>
+        <div id="result2"></div>
+    </div>
+</div>
+
+<script>
+let score = 0;
+function checkAnswer(question, isLegit) {
+    const result = document.getElementById(`result${question}`);
+    if (!isLegit) {
+        score++;
+        result.innerHTML = '<span style="color:green; font-weight:bold;"> CORRECT! Phishing detected!</span>';
+    } else {
+        result.innerHTML = '<span style="color:red; font-weight:bold;"> WRONG! This is phishing!</span>';
+    }
+    
+    if (question === 2 && score === 1) {
+        setTimeout(() => {
+            alert(` Score: ${score}/2\nGreat job spotting phishing!\n\n Remember: Always verify suspicious emails!`);
+        }, 500);
+    }
+}
+</script>
+
+</body>
+</html>
